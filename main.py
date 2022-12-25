@@ -3,31 +3,27 @@ from selenium.webdriver.common.by import By
 import requests
 import json
 import time
+import datetime
 
 products = {}
 name = ""
 sizes = []
+totalorders = 0
 
-def retrieve_webhook(channelid): #fill with your own authorization token
-    headers = { 
-        'authorization': '' 
+def retrieve_webhook(channelid): 
+    headers = { #fill with your own authorization token below
+        'authorization': 'REPLACE HERE' 
     }
-
     r = requests.get(f'https://discord.com/api/v9/channels/{channelid}/messages', headers=headers)
     jsonn = json.loads(r.text)
-
     sku = input("Enter your SKU: ")
     print('\n')
-
     for webhook in jsonn:
         for embed in webhook['embeds']:
             for fields in embed['fields']:
                 if sku in fields['value']:
-                    
                     for fields in embed['fields']:
-                        
                         if fields['name'] == "**Email**":
-                            
                             temp = fields['value']
                             temp2 = temp.replace('|',"")
                             products[temp2] = None
@@ -38,28 +34,33 @@ def retrieve_webhook(channelid): #fill with your own authorization token
                         if fields['name'] == "**Product Name**":
                             global name
                             name = fields['value']
-                            
                         if fields['name'] == "**Size**":
-                            # temp7 = fields['value']
-                            # temp8 = temp7.replace('|',"")
-                            # products[temp2] = temp8 
                             sizes.append(fields['value'])
-
-                        
-    # print(products)
-    
-
-                
-retrieve_webhook()#Place ChannelID here
+     
+retrieve_webhook(1234567890)#Place ChannelID here
 
 def checkstat(dict,name):
+    headers = { #fill with your own authorization token below
+        'authorization': 'REPLACE HERE' 
+    }
+    tracking_channelID = 1234567890 #Place tracking ChannelID here
+
+    date = datetime.datetime.now()
+    now = date.strftime("%m-%d-%y %H:%M:%S")
+    
+
     PATH = "chromedriver.exe"
     driver = webdriver.Chrome(PATH)
-    print('Number of Orders:', len(dict))
-    print(name)
+ 
+    totalorders = len(dict)
+    line = "-------------------START CHECK-------------------"
+    
+    payload = {
+                 'content': "```{}\n{}\n{} \nTotal Orders: {}```".format(line,now,name,totalorders)
+            }
+    r = requests.post(f'https://discord.com/api/v9/channels/{tracking_channelID}/messages',data=payload, headers=headers)
     i = 0
     for key in dict:
-        
         driver.get('https://www.nike.com/orders/details/')
         orderNumber = driver.find_element(By.ID,'orderNumber')
         email = driver.find_element(By.ID,'email')
@@ -81,14 +82,19 @@ def checkstat(dict,name):
         
         if status == "Shipped":
             trackingbutton = driver.find_element(by=By.LINK_TEXT, value = "Track Shipment")
-           
             number = trackingbutton.get_attribute('href')
-            
-            print("Order Number:",on,"EMAIL:",mail,"SIZE:", sizes[i],"to:",addy,"STATUS:", status,"TRACKING NUMBER:", number,'\n')
+            payload = {
+                 'content': "```Order Number: {} \nEMAIL: {} \nSIZE: {} \nADDRESS: {} \nSTATUS: {} \nTRACKING:{}\nLINK BELOW:``` {}".format(on, mail, sizes[i], addy, status,number,number)
+            }
+            r = requests.post(f'https://discord.com/api/v9/channels/{tracking_channelID}/messages',data=payload, headers=headers)   
         else:
-            print("Order Number:",on,"EMAIL:",mail,"SIZE:", sizes[i],"to:",addy,"STATUS:", status, '\n')
+            payload = {
+                 'content': "```Order Number: {} \nEMAIL: {} \nSIZE: {} \nADDRESS: {} \nSTATUS: {}\n```".format(on, mail, sizes[i], addy, status)
+            }
+
+            r = requests.post(f'https://discord.com/api/v9/channels/{tracking_channelID}/messages',data=payload, headers=headers)
         i=i+1
-            
+   
 checkstat(products,name)
 
 
