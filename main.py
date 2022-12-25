@@ -5,6 +5,8 @@ import json
 import time
 
 products = {}
+name = ""
+sizes = []
 
 def retrieve_webhook(channelid): #fill with your own authorization token
     headers = { 
@@ -33,16 +35,31 @@ def retrieve_webhook(channelid): #fill with your own authorization token
                             temp3 = fields['value']
                             temp4 = temp3.replace('|',"")
                             products[temp2] = temp4  
-                       
+                        if fields['name'] == "**Product Name**":
+                            global name
+                            name = fields['value']
+                            
+                        if fields['name'] == "**Size**":
+                            # temp7 = fields['value']
+                            # temp8 = temp7.replace('|',"")
+                            # products[temp2] = temp8 
+                            sizes.append(fields['value'])
+
+                        
+    # print(products)
+    
+
                 
 retrieve_webhook()#Place ChannelID here
 
-def checkstat(dict):
+def checkstat(dict,name):
     PATH = "chromedriver.exe"
     driver = webdriver.Chrome(PATH)
     print('Number of Orders:', len(dict))
-
+    print(name)
+    i = 0
     for key in dict:
+        
         driver.get('https://www.nike.com/orders/details/')
         orderNumber = driver.find_element(By.ID,'orderNumber')
         email = driver.find_element(By.ID,'email')
@@ -67,11 +84,12 @@ def checkstat(dict):
            
             number = trackingbutton.get_attribute('href')
             
-            print("Order Number:",on,"EMAIL:",mail,"to:",addy,"STATUS:", status,"TRACKING NUMBER:", number,'\n')
+            print("Order Number:",on,"EMAIL:",mail,"SIZE:", sizes[i],"to:",addy,"STATUS:", status,"TRACKING NUMBER:", number,'\n')
         else:
-            print("Order Number:",on,"EMAIL:",mail,"to:",addy,"STATUS:", status, '\n')
+            print("Order Number:",on,"EMAIL:",mail,"SIZE:", sizes[i],"to:",addy,"STATUS:", status, '\n')
+        i=i+1
             
-checkstat(products)
+checkstat(products,name)
 
 
 
